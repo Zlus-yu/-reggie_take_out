@@ -84,29 +84,47 @@ public class SetmealServiceImpl extends ServiceImpl<SetmealMapper, Setmeal> impl
      * @param id
      */
     @Override
-    public void updateStatue(Integer statusValue, Long id) {
+    public void updateStatue(Integer statusValue, List<Long> ids) {
 
-        Setmeal setmeal = this.getById(id);
+        LambdaQueryWrapper<Setmeal> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(Setmeal::getId, ids);
+        List<Setmeal> setmeals = this.list(queryWrapper);
 
         if(statusValue == 0){
-            setmeal.setStatus(statusValue);
-            this.updateById(setmeal);
+            for (Setmeal setmeal : setmeals) {
+                setmeal.setStatus(statusValue);
+                this.updateById(setmeal);
+            }
+
             return;
         }
 
-        LambdaQueryWrapper<SetmealDish> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(SetmealDish::getSetmealId, id);
-        List<SetmealDish> dishList = setmealDishService.list(queryWrapper);
-        for (SetmealDish dish: dishList) {
-            Long dishId = dish.getDishId();
-            Integer status = dishService.getById(dishId).getStatus();
-            if (status == 0){
-                throw new CustomerException("所选套餐已有菜品停售，无法启售");
+
+
+        LambdaQueryWrapper<SetmealDish> setmealDishLambdaQueryWrapperqueryWrapper;
+
+        for (Long id : ids) {
+            setmealDishLambdaQueryWrapperqueryWrapper = new LambdaQueryWrapper<>();
+            setmealDishLambdaQueryWrapperqueryWrapper.eq(SetmealDish::getSetmealId, id);
+            List<SetmealDish> dishList = setmealDishService.list(setmealDishLambdaQueryWrapperqueryWrapper);
+
+            for (SetmealDish dish: dishList) {
+                Long dishId = dish.getDishId();
+                Integer status = dishService.getById(dishId).getStatus();
+                if (status == 0){
+                    throw new CustomerException("所选套餐已有菜品停售，无法启售");
+                }
             }
+
         }
 
-        setmeal.setStatus(statusValue);
-        this.updateById(setmeal);
+        for (Setmeal setmeal : setmeals) {
+            setmeal.setStatus(statusValue);
+            this.updateById(setmeal);
+        }
+
+
+
 
     }
 }

@@ -31,5 +31,5 @@ public interface SetmealService extends IService<Setmeal> {
      * @param statusValue
      * @param id
      */
-    public void updateStatue(Integer statusValue, Long id);
+    public void updateStatue(Integer statusValue, List<Long> ids);
 }
